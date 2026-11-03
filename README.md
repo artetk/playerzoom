@@ -11,7 +11,7 @@ An intelligent, modular, and high-performance solution for stepped video zooming
 Click the buttons below to install or update the scripts directly in Tampermonkey:  
 *Нажмите кнопки ниже для установки или обновления скриптов напрямую в Tampermonkey:*
 
-[![Install Core Module](https://shields.io🔥_Tampermonkey-green?style=for-the-badge)](https://github.com/artetk/playerzoom/raw/9599ab41272d4597b30fdac304379e4413b16d43/core-module-zoom.user.js)
+[![Install Core Module](https://shields.io🔥_Tampermonkey-green?style=for-the-badge)](https://github.com/artetk/playerzoom/raw/refs/heads/main/core-module-zoom.user.js)
 
 [![Install Zona Interface](https://shields.io📦_Tampermonkey-blue?style=for-the-badge)](https://github.com/artetk/playerzoom/raw/refs/heads/main/zona-interface.user.js)
 
