@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Zona Plus - 1. Плеер и Интерфейс (Modular + AutoHide)
 // @namespace    http://tampermonkey.net
-// @version      0.1
+// @version      0.2
 // @match        https://*.zona.plus/*
 // @grant        GM.openInTab
 // @grant        GM.setValue
@@ -12,19 +12,20 @@
 // @updateURL    https://github.com/artetk/playerzoom/raw/refs/heads/main/zona-interface.user.js
 // @downloadURL  https://github.com/artetk/playerzoom/raw/refs/heads/main/zona-interface.user.js
 
+
 (function () {
     'use strict';
     const SITE_DOMAIN = 'w140.zona.plus';
     const PLAYER_URL = `https://${SITE_DOMAIN}/player`;
 
     let uiTimer = null;
+    let isUiVisible = true; // Флаг текущего состояния UI для оптимизации mousemove
 
     if (!sessionStorage.getItem('zona_init')) {
         Object.keys(localStorage).forEach(k => k.startsWith('z_pos_') && localStorage.removeItem(k));
         sessionStorage.setItem('zona_init', '1');
     }
 
-    // Слушатели событий от Главного Модуля Зума
     window.addEventListener('zona-apply-zoom', e => {
         const target = document.getElementById('zoom-layer') || document.querySelector('video');
         if (target) {
@@ -44,34 +45,31 @@
             else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
         });
 
-            // Функция управления автоскрытием интерфейса
             function initAutoHideUI() {
                 const uiLayer = document.getElementById('ui-layer');
                 if (!uiLayer) return;
 
                 function showUI() {
-                    // Возвращаем видимость и сбрасываем старый таймер
+                    clearTimeout(uiTimer);
+                    uiTimer = setTimeout(hideUI, 5000);
+
+                    if (isUiVisible) return; // Оптимизация: если UI уже виден, не дергаем DOM стили
+                    isUiVisible = true;
+
                     uiLayer.style.setProperty('opacity', '1', 'important');
                     uiLayer.style.setProperty('pointer-events', 'auto', 'important');
-
-                    clearTimeout(uiTimer);
-
-                    // Запускаем новый отсчет на 5 секунд (5000 миллисекунд)
-                    uiTimer = setTimeout(hideUI, 5000);
                 }
 
                 function hideUI() {
-                    // Плавно скрываем интерфейс и отключаем кликабельность в скрытом состоянии
+                    isUiVisible = false;
                     uiLayer.style.setProperty('opacity', '0', 'important');
                     uiLayer.style.setProperty('pointer-events', 'none', 'important');
                 }
 
-                // Вешаем глобальные триггеры активности на документ плеера
                 document.addEventListener('mousemove', showUI, { passive: true });
                 document.addEventListener('touchstart', showUI, { passive: true });
                 document.addEventListener('keydown', showUI, { passive: true });
 
-                // Инициализируем первое скрытие при старте плеера
                 showUI();
             }
 
@@ -81,7 +79,10 @@
                 if (!videoSrc || !document.body) { window.requestAnimationFrame(render); return; }
                 if (document.getElementById('app-root')) return;
 
-                document.body.innerHTML = '';
+                // БЕЗОПАСНАЯ ОЧИСТКА: Удаляем только прямые старые ноды элементов, если они были, не задевая document.body целиком
+                while (document.body.firstChild) {
+                    document.body.removeChild(document.body.firstChild);
+                }
 
                 const style = document.createElement('style');
                 style.textContent = `
@@ -90,7 +91,6 @@
                 #zoom-layer { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; transition: transform 0.25s ease; will-change: transform; }
                 video { width: 100%; height: 100%; object-fit: contain; pointer-events: auto; }
                 video:focus { outline: none; }
-                /* Добавлено плавное свойство transition для исчезновения UI */
                 .ui { position: fixed; left: 20px; top: 50%; transform: translateY(-50%); z-index: 10000; display: flex; flex-direction: column; gap: 15px; transition: opacity 0.4s ease-in-out !important; will-change: opacity; }
                 .btn { width: 85px; height: 100px; background: rgba(0,0,0,0.6); border: 2px solid #fff; border-radius: 12px; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; font-size: 13px; text-align: center; user-select: none; }
                 `;
@@ -132,7 +132,6 @@
                     setTimeout(() => v.focus(), 80);
                 };
 
-                // Запускаем таймер автоскрытия для созданного слоя
                 initAutoHideUI();
             }
 
